@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wecom-cli:*)",
+      "Bash(npm list:*)",
+      "Bash(npm root:*)",
+      "Bash(python .claude/skills/skill-creator/scripts/quick_validate.py .claude/skills/wecomcli-crm)",
+      "Bash(python -c \":*)",
+      "Bash(node -e \"let d='''''''';process.stdin.on\\(''''data'''',c=>d+=c\\);process.stdin.on\\(''''end'''',\\(\\)=>{const o=JSON.parse\\(JSON.parse\\(d\\).content[0].text\\);const r=o.records.find\\(x=>x.record_id===''''h1sBjX''''\\);if\\(r\\){const v=r.values;console.log\\(''''公司名称:'''',v[''''公司名称''''][0].text\\);console.log\\(''''状态:'''',v[''''状态''''][0].text\\);console.log\\(''''行业:'''',v[''''行业''''][0].text\\);console.log\\(''''备注:'''',v[''''备注''''][0].text\\);console.log\\(''''总记录数:'''',o.total\\)}else console.log\\(''''未找到记录''''\\)}\\)\")",
+      "Bash(node -e \"let d='''''''';process.stdin.on\\(''''data'''',c=>d+=c\\);process.stdin.on\\(''''end'''',\\(\\)=>{const o=JSON.parse\\(JSON.parse\\(d\\).content[0].text\\);console.log\\(''''总记录数:'''',o.total\\);const found=o.records.find\\(x=>x.record_id===''''h1sBjX''''\\);console.log\\(''''测试记录已删除:'''',found?''''失败-仍存在'''':''''成功''''\\)}\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,368 @@
+企微开源“养虾大杀器”！AI可接管消息、日程、文档，12个Skill一次放出
+图片图片
+
+Claude Code、Codex、QClaw、Work Buddy都能直接调用。
+作者 |  江宇
+编辑 |  漠影
+企业微信把接口端“掀开了一层”！
+智东西3月30日报道，刚刚，企业微信正式把CLI开源了，AI Agent可以直接调用消息、日程、文档、会议、待办、通讯录、智能表格等7大类能力。
+该项目已上架GitHub，支持Claude Code、Codex、Work Buddy、QClaw等主流AI Agent接入。企业微信的核心办公能力，以更适合Agent调用的方式被系统性开放出来。
+图片
+这次开源优先面向10人及以下团队。消息收发、成员查询、会议创建、日程管理、文档读写、智能表格增删改查、待办流转，这些企业协同里最常用的一批动作，现在都可以通过CLI直接调起。
+相比传统API，这套方式更贴近Agent的执行逻辑。AI可以围绕任务目标逐步调用命令，把“查人—建会—发消息—写文档—同步待办”这一类多步骤流程串起来。对开发者来说，接入门槛也更低，不用写太多额外适配代码，还能减少不必要的上下文消耗，间接压低Token成本。
+目前，企业微信一共开放了7大业务品类、12个AI Agent Skills。覆盖范围包括：
+通讯录可获取可见成员列表、按姓名或别名搜索；
+待办支持创建、查询、更新、删除与状态变更；
+会议支持预约、取消、更新参会人、查询列表和详情；
+消息支持会话列表、消息拉取、多媒体下载和文本发送；
+日程支持增删改查、参与人管理和闲忙查询；
+文档支持创建、读取、编辑；智能表格则支持子表、字段、记录的完整管理。
+图片
+简单来说，企业微信正在变成“可被AI操作的工作系统”。
+开源地址：https://github.com/WecomTeam/wecom-cli
+
+
+
+
+01.
+
+3步接入，快速上手
+
+
+企业微信给出的上手方案很简单，基本分三步。
+第一步，配置机器人凭证。开发者需要先在企业微信后台创建机器人，拿到Bot ID和Secret。
+第二步，安装CLI和Skill。
+安装命令如下：
+# 安装CLI
+npm install -g @wecom/cli
+# 安装CLI Skill（必需）
+npx skills add WeComTeam/wecom-cli -y -g
+第三步，初始化并开始调用。首次使用时，需要执行一次初始化，交互式写入机器人凭证：
+wecom-cli init
+凭证会加密存储到本地，默认位置为：
+~/.config/wecom/bot.enc
+配置完成后，就可以直接调用工具了。比如先查一下通讯录成员：
+wecom-cli contact get_userlist '{}'
+
+02.
+
+先看总入口，命令结构并不复杂
+
+
+从命令设计看，wecom-cli比较清晰。先用帮助命令看总入口：
+wecom-cli --help
+输出里主要包含这些一级命令：
+Usage: wecom-cli <COMMAND>
+Commands:
+init Documentation for init
+contact 通讯录—成员查询和搜索
+doc 文档—文档/智能表格创建和管理
+meeting 会议—创建/管理/查询视频会议
+msg 消息—聊天列表、发送/接收消息、媒体下载
+schedule 日程—日程增删改查和可用性查询
+todo 待办事项—创建/查询/编辑待办项
+实际调用逻辑也很统一：
+# 查看某个品类下有哪些工具
+wecom-cli <category>
+# 调用某个具体工具
+wecom-cli <category> <method> [json_args]
+例如：
+# 查看通讯录品类下的工具
+wecom-cli contact
+# 查看待办品类下的工具
+wecom-cli todo
+# 调用通讯录查询
+wecom-cli contact get_userlist '{}'
+
+
+
+
+03.
+
+7大能力都能干什么，官方把常用命令也给全了
+
+
+1、通讯录：最核心的能力，是获取可见成员列表。
+# 获取全量通讯录成员
+wecom-cli contact get_userlist '{}'
+对应的Agent Skill是：
+wecomcli-lookup-contact
+适合做按姓名、别名搜索成员，以及后续的消息发送、会议邀请、日程添加参与人等动作。
+2、待办：支持查列表、查详情、创建、更新、删除，以及变更处理状态。
+# 查询待办列表
+wecom-cli todo get_todo_list '{}'
+# 创建待办
+wecom-cli todo create_todo '{"content": "完成Q2规划文档", "remind_time": "2026-06-01 09:00:00"}'
+# 批量查询待办详情
+wecom-cli todo get_todo_detail '{"todo_id_list": ["TODO_ID_1", "TODO_ID_2"]}'
+# 标记待办完成
+wecom-cli todo update_todo '{"todo_id": "TODO_ID", "todo_status": 0}'
+# 删除待办
+wecom-cli todo delete_todo '{"todo_id": "TODO_ID"}'
+对应的Agent Skills包括：
+wecomcli-get-todo-list
+wecomcli-get-todo-detail
+wecomcli-edit-todo
+这部分支持“把会议结论自动拆成待办”和“根据消息内容生成任务并指定提醒时间”这类流程。
+3、会议：支持创建预约会议、取消会议、更新受邀成员，以及查询时间范围内的会议列表和详情。
+# 查询本周会议
+wecom-cli meeting list_user_meetings '{"begin_datetime": "2026-03-23 00:00", "end_datetime": "2026-03-29 23:59", "limit": 100}'
+# 创建会议
+wecom-cli meeting create_meeting '{"title": "技术方案评审", "meeting_start_datetime": "2026-03-30 15:00", "meeting_duration": 3600, "invitees": {"userid": ["zhangsan", "lisi"]}}'
+# 获取会议详情
+wecom-cli meeting get_meeting_info '{"meetingid": "MEETING_ID"}'
+# 取消会议
+wecom-cli meeting cancel_meeting '{"meetingid": "MEETING_ID"}'
+对应Skills包括：
+wecomcli-create-meeting
+wecomcli-edit-meeting
+wecomcli-get-meeting
+如果和通讯录、闲忙查询串起来，这一套可以让Agent完成“一句话安排约会”这类惯用的功能。
+4、消息：支持查询会话列表、拉取消息记录、下载多媒体，以及向单聊或群聊发送文本消息。
+# 获取最近一周会话列表
+wecom-cli msg get_msg_chat_list '{"begin_time": "2026-03-22 00:00:00", "end_time": "2026-03-29 23:59:59"}'
+# 拉取聊天记录
+wecom-cli msg get_message '{"chat_type": 1, "chatid": "zhangsan", "begin_time": "2026-03-29 09:00:00", "end_time": "2026-03-29 18:00:00"}'
+# 发送文本消息
+wecom-cli msg send_message '{"chat_type": 1, "chatid": "zhangsan", "msgtype": "text", "text": {"content": "hello"}}'
+# 下载多媒体文件
+wecom-cli msg get_msg_media '{"media_id": "MEDIA_ID"}'
+对应Skill是：
+wecomcli-get-msg
+这部分是整个Agent办公链路里的关键一环，因为很多任务本身就是从消息触发，再回到消息里反馈结果。
+5、日程：支持查询、详情获取、创建、更新、取消、参与人增删以及多成员闲忙查询。
+# 查询今天的日程
+wecom-cli schedule get_schedule_list_by_range '{"start_time": "2026-03-29 00:00:00", "end_time": "2026-03-29 23:59:59"}'
+# 获取日程详情
+wecom-cli schedule get_schedule_detail '{"schedule_id_list": ["SCHEDULE_ID"]}'
+# 创建日程
+wecom-cli schedule create_schedule '{"schedule": {"start_time": "2026-03-30 14:00:00", "end_time": "2026-03-30 15:00:00", "summary": "需求评审", "attendees": [{"userid": "zhangsan"}], "reminders": {"is_remind": 1, "remind_before_event_secs": 900, "timezone": 8}}}'
+# 查询闲忙
+wecom-cli schedule check_availability '{"check_user_list": ["zhangsan", "lisi"], "start_time": "2026-03-30 09:00:00", "end_time": "2026-03-30 18:00:00"}'
+对应Skill是：
+wecomcli-manage-schedule
+对Agent来说，闲忙查询可实现“自动协调时间”这一功能。
+6、文档：支持创建、读取和编辑，读取内容时采用Markdown格式，且支持异步轮询。
+# 创建文档
+wecom-cli doc create_doc '{"doc_type": 3, "doc_name": "项目周报"}'
+# 读取文档内容（首次调用）
+wecom-cli doc get_doc_content '{"docid": "DOC_ID", "type": 2}'
+# 读取文档内容（轮询，携带task_id）
+wecom-cli doc get_doc_content '{"docid": "DOC_ID", "type": 2, "task_id": "TASK_ID"}'
+# 编辑文档
+wecom-cli doc edit_doc_content '{"docid": "DOC_ID", "content": "# 标题\n\n正文内容", "content_type": 1}'
+对应Skill是：
+wecomcli-manage-doc
+这意味着Agent能直接把结果写进企业微信文档里。
+7、智能表格：除了创建表格，还支持子表、字段和记录的完整管理。
+# 创建智能表格
+wecom-cli doc create_doc '{"doc_type": 10, "doc_name": "任务跟踪表"}'
+# 查询智能表格子表
+wecom-cli doc smartsheet_get_sheet '{"docid": "DOC_ID"}'
+# 查询子表字段信息
+wecom-cli doc smartsheet_get_fields '{"docid": "DOC_ID", "sheet_id": "SHEET_ID"}'
+# 添加子表字段
+wecom-cli doc smartsheet_add_fields '{"docid": "DOC_ID", "sheet_id": "SHEET_ID", "fields": [{"field_title": "状态", "field_type": "FIELD_TYPE_SINGLE_SELECT"}]}'
+# 查询子表记录
+wecom-cli doc smartsheet_get_records '{"docid": "DOC_ID", "sheet_id": "SHEET_ID"}'
+# 添加记录
+wecom-cli doc smartsheet_add_records '{"docid": "DOC_ID", "sheet_id": "SHEET_ID", "records": [{"values": {"标题": [{"type": "text", "text": "新任务"}]}}]}'
+# 更新记录
+wecom-cli doc smartsheet_update_records '{"docid": "DOC_ID", "sheet_id": "SHEET_ID", "key_type":"CELL_VALUE_KEY_TYPE_FIELD_TITLE", "records": [{"record_id": "RECORD_ID", "values": {"标题": [{"type": "text", "text": "已更新"}]}}]}'
+# 删除记录
+wecom-cli doc smartsheet_delete_records '{"docid": "DOC_ID", "sheet_id": "SHEET_ID", "record_ids": ["RECORD_ID"]}'
+对应Skills包括：
+wecomcli-manage-smartsheet-schema
+wecomcli-manage-smartsheet-data
+智能表格解决的是结构化协作，比如销售线索跟进、项目任务看板、采访进度管理，都可以直接交给Agent处理。
+目前，企业微信给出了的12个Agent Skills，这也解释了为什么它能直接适配Claude Code、Codex、Work Buddy、QClaw这类主流Agent工具：底层能力被提前封装成了适合Agent调用的技能单元。
+
+
+
+
+04.
+
+结语：办公软件开始“龙虾化”
+
+
+这次企业微信CLI开源，是企业微信对Agent时代的一次明确表态：办公系统开始给AI开放执行接口。
+过去，AI更多停留在“生成内容”与“回答问题”这一步。现在，随着消息、会议、文档、表格、待办、日程这些真实办公能力被开放，AI得以真正接入工作流，去操作、去执行任务。
+从这个角度看，办公软件正从协同工具，往Agent任务入口进化。
+图片
+图片
+
+
+
+
+
+企业微信也开源了 CLI 工具（附详细安装和实测教程）
+上一篇文章我写了飞书开源 CLI 工具 的体验，没想到企业微信紧接着也开源了自己的 CLI 工具，叫 wecom-cli。
+
+看来办公软件厂商们都意识到了一个趋势：AI Agent 需要一个统一的入口来操作这些办公工具，而 CLI 就是最好的选择。
+
+简单解释一下，CLI 就是 Command Line Interface，命令行界面。你可以在终端里输入一行命令，就完成原来需要打开 APP 点好几步才能完成的操作。
+
+更重要的是，AI Agent 也可以通过这个命令行来操作企业微信，帮你发消息、建会议、管待办、写文档，你只需要跟 AI 说句话就行了。
+
+这篇文章我会详细介绍 wecom-cli 是什么、和飞书 CLI 有什么不同、怎么安装配置，以及我实际测试的效果。内容比较长，建议收藏慢慢看。
+
+wecom-cli 能做什么
+wecom-cli 是企业微信官方在 GitHub 上开源的命令行工具，MIT 协议，代码地址是 WeComTeam/wecom-cli[1]。
+
+和飞书 CLI 的思路一样，这个工具的主要目标用户也是 AI Agent。
+
+它覆盖了企业微信 7 个核心业务域，提供了 12 个 AI Agent Skills。具体来说，这 7 个业务域分别是：
+
+• 通讯录：可以获取可见范围内的成员列表，按姓名或别名搜索同事。
+• 待办：创建、查询、更新、删除待办，还能变更待办的处理状态。
+• 会议：创建预约会议、取消会议、更新受邀成员、查询会议列表和详情。
+• 消息：查会话列表、拉取聊天记录（支持文本、图片、文件、语音、视频）、下载多媒体文件、发送文本消息。
+• 日程：日程的增删改查、参与人管理、多成员闲忙查询。
+• 文档：文档的创建、读取和编辑。
+• 智能表格：创建智能表格、管理子表和字段、表格记录的增删改查。
+简单说就是，企业微信里你日常用得最多的那些功能，通过这个 CLI 基本都能操作了。
+
+和飞书 CLI 有什么不同
+既然飞书和企业微信都出了 CLI 工具，很多人肯定想知道它们有什么区别。我简单对比一下。
+
+从覆盖范围来看，飞书 CLI 覆盖了 11 个业务域，包括即时通讯、云文档、多维表格、电子表格、日历、邮箱、任务、视频会议、知识库、通讯录、云空间；企业微信 CLI 目前覆盖 7 个业务域。如果只看规模，飞书 CLI 现在还是更完整一些。
+
+从命令和 Skills 的数量来看，飞书 CLI 已经有 200 多条命令和 19 个 Skills，企业微信 CLI 目前是 12 个 Skills。比如飞书 CLI 支持邮箱、知识库、电子表格这些模块，企业微信这边暂时还没有。
+
+从配置流程来看，飞书 CLI 更自动化一些。执行 config init 之后，可以在浏览器里完成创建和授权，整个过程可以让 AI 自己引导你完成。
+
+企业微信 CLI 这边则需要你先去企业微信管理后台创建智能机器人，拿到 Bot ID 和 Secret，再执行 wecom-cli init 输入凭证。整体来说，企业微信 CLI 的入口更深，步骤也稍微多一点。
+
+还有一个值得注意的点，企业微信 CLI 目前优先面向 10 人及以下规模的企业。
+
+也就是说，如果你的企业微信团队人数超过 10 人，可能暂时还用不了。
+
+总的来说，飞书 CLI 目前在功能完整度和开箱体验 上领先一些，但企业微信 CLI 作为第一个版本，核心功能都已经覆盖了。如果你的团队用的是企业微信，那这个工具同样值得一试。
+
+安装前的准备工作
+在安装 wecom-cli 之前，需要先在企业微信管理后台创建一个智能机器人。这一步是必须的，因为 CLI 工具需要通过这个机器人的凭证来调用企业微信的 API。
+
+这个创建入口藏得有点深，我找了好一会儿才找到。你可以直接访问这个链接来创建：https://work.weixin.qq.com/wework_admin/frame#/aiHelper/list?tab=create
+
+图片
+打开页面后，注意要点击切换到 API 模式 来创建，默认可能不是这个模式。
+
+图片
+创建的时候需要注意这几件事：
+
+• 添加可见范围
+• 选择使用长连接方式
+• 把 Bot ID 和 Secret 复制保存下来，后面配置的时候要用到
+图片
+最后记得给机器人授权消息等相关权限，然后保存。
+
+图片
+到这里准备工作就做完了。手里有了 Bot ID 和 Secret，就可以开始安装 CLI 了。
+
+安装 CLI 和 Skills
+安装过程很简单，两行命令就搞定。前提是你的电脑上已经装了 Node.js（有 npm 和 npx 就行）。
+
+第一步，安装 wecom-cli 本体：
+
+npm install -g @wecom/cli
+第二步，安装 AI Agent 需要的 Skills：
+
+npx skills add WeComTeam/wecom-cli -y -g
+Skills 可以理解为一组预置的指令文件，AI Agent 加载之后就知道该怎么调用企业微信的各项功能了。
+
+这一步会安装 12 个 Skills，覆盖前面提到的所有业务域。安装完成后，Claude Code、Cursor、Codex 这些主流 AI 编程工具都可以直接调用。跑完命令，终端会列出所有安装成功的 Skills。
+
+图片
+配置凭证并验证
+安装完成后，执行 wecom-cli init 命令来配置企业微信机器人的凭证。这是一个交互式的配置过程，把刚才保存的 Bot ID 和 Secret 输入进去就行了，只需要配置一次。
+
+wecom-cli init
+配置完成后，可以跑一条简单的命令来验证一下是否配置成功：
+
+wecom-cli contact get_userlist '{}'
+这条命令的作用是获取当前可见范围内的通讯录成员列表。如果能正常返回结果，说明安装和配置都没问题了。
+
+图片
+到这里，整个安装配置就完成了。接下来就可以在 AI 编程工具里直接使用了。
+
+实测：创建云文档
+安装好之后我迫不及待地想试试实际效果，在 Claude Code 里测试了几个核心功能。
+
+第一个测试的是云文档。我给 Claude Code 下了一个指令：把企业微信 CLI 的功能介绍整理成一份云文档。
+
+图片
+过了一会儿，Claude Code 告诉我文档创建成功了，并且返回了文档链接。
+
+图片
+我点开链接看了一下，文档确实创建成功了，内容也是对的。不过说实话，排版还是一言难尽，格式上比较粗糙。
+
+但这个锅应该不在 CLI 工具上，更多是文档 API 在格式渲染上的限制。能用 AI 一句话就创建出一份企业微信云文档，这个能力本身还是很实用的。打开后大概是这个效果。
+
+图片
+实测：预约会议
+接下来测试会议功能。我跟 Claude Code 说：约一个会议，参会人方圆和嚯嚯嚯，今天晚上 8 点讨论一下 wecom-cli 的功能。
+
+图片
+会议创建成功后，我去企业微信里查看了一下。会议链接可以正常打开，会议主题、时间、参会人都设置得没问题。
+
+说实话，这个功能我觉得是最实用的。
+
+以前约个会议要打开企业微信，找到会议功能，填写标题、时间、参会人，一套操作下来要点好多步。
+
+现在跟 AI 说一句话就搞定了。我打开企业微信看了一下会议详情，信息都是对的。
+
+图片
+实测：发送消息
+最后测试消息功能。既然会议约好了，我就顺便让 AI 给参会人发个消息提醒一下，告诉他们记得参加会议。
+
+图片
+消息发送成功了。不过这里有一个有意思的细节：消息的发送人不是智能机器人，而是我自己的企业微信账户。
+
+也就是说，CLI 工具是以你本人的身份来发送消息的，对方收到的消息看起来就像是你自己发的一样。
+
+这个设计有利有弊。好处是对方不会觉得收到了一条机器人消息，沟通更自然。
+
+但如果你想让机器人来发通知类的消息，可能就不太合适了。看看对方那边实际收到的效果。
+
+图片
+写在最后
+总的来说，企业微信 CLI 作为第一个版本，核心功能都覆盖到了，实测下来创建会议、发送消息、创建云文档 这些高频操作都能正常使用。
+
+对于日常用企业微信办公的人来说，装上这个工具之后，很多操作不用再手动去 APP 里点了，跟 AI 说一句话就行。
+
+和飞书 CLI 相比，企业微信 CLI 目前的功能数量和覆盖面还有差距，配置流程也稍微麻烦一点。
+
+但好消息是这个项目刚刚开源，后续应该会持续补充更多功能。
+
+如果你的团队在用企业微信（10 人及以下规模），不妨试试这个工具。安装只需要两行命令，配置一次就能长期使用。
+
+GitHub 仓库地址：https://github.com/WeComTeam/wecom-cli
+
+
+往期推荐
+Harness Engineering 就是控制论：从蒸汽机到 AI 写代码，同一个模式反复出现
+X万字干货解读：Claude Code架构、治理与工程实践
+如何设计 Harness 工程，实现长时间自动开发应用
+微信官方突然推出Clawbot，教你如何快速接入OpenClaw
+
+如果你也在探索AI 落地、AI 提效、AI 编程，欢迎加我交流👇
+图片
+
+
+
+
+关注公众号，发送「进群」加入 AI 交流群
+
+
+
+觉得有收获？关注 + 点赞 + 转发，你的支持是我持续输出的动力~
+
+引用链接
+[1] WeComTeam/wecom-cli: https://github.com/WeComTeam/wecom-cli
+
+
+
+
+
+
+暂无评论
