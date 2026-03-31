@@ -1,4 +1,4 @@
-# 企业微信 Agent 项目
+# 企业微信 Agent 项目 `wecomcli-crm`
 
 基于 [wecom-cli](https://github.com/WecomTeam/wecom-cli) 搭建的企业微信 Agent 工作台。通过 Claude Code + Skills 实现 AI 驱动的 CRM 客户管理、消息处理、会议日程等企业微信操作。
 
