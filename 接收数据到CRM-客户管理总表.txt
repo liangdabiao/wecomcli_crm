@@ -1,6 +1,0 @@
-接收数据到CRM-客户管理总表
-
-来源： 在企业微信，找到智能表格，找到合适的 crm模板，使用模板，浏览器打开查看地址，格式如下：
-
-url:https://doc.weixin.qq.com/smartsheet/s3_AQ0A6QYyNODVkRTKS2t1r?scode=AFYAsweBqztjXlAQ0A6QYyAOg&version=5.0.7.6005&platform=win&tab=q979lj&viewId=vukaF8
- 
